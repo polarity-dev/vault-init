@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  vault:
+    build:
+      context: ./vault/src
+    container_name: vault
+    ports:
+      - 8200:8200
+    environment:
+      VAULT_REDIRECT_INTERFACE: eth0
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ${PWD}/vault/data:/vault/data
+    networks:
+      default:
+        aliases:
+          - vault.example.com
+
+  vault-init:
+    build:
+      context: ./src
+      args:
+        VAULT_ENDPOINT: http://vault.example.com:8200
+        VAULT_ADMIN_PASSWORD: admin
+        VAULT_ADMIN_USERNAME: admin
+    container_name: vault_init
+

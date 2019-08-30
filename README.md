@@ -5,23 +5,17 @@ vault-init is a useful container that can be used to automatically configure a v
 ## Behaviour
 vault-init performs the following operations:
 1. Check the current vault status (with a retry mechanism that will retry to connect every 5s if the vault server is not available)
-2. Initialize the vault server (or exit if already initilized)
-3. Unseal the vault server
+2. Initialize the vault server (or just unseal and then exit if already initialized)
+3. Unseal the vault server and save the unseal key
 4. Create the admin policy
-<<<<<<< HEAD
 5. Create the admin user (username: `$VAULT_ADMIN_USERNAME` and password: `$VAULT_ADMIN_PASSWORD`)
-=======
-5. Create the admin user (username: `admin` and password: `$VAULT_ADMIN_PASSWORD`)
->>>>>>> Add README.md
 
 ## Configurations
 You can configure the vault-init behaviour using these env variables:
 - `VAULT_ENDPOINT` is the endpoint of the vault server (eg. `https://vault.example.com:8200`)
 - `VAULT_ADMIN_PASSWORD` is the desired password for the admin user
-<<<<<<< HEAD
 - `VAULT_ADMIN_USERNAME` is the desired username for the admin user
-=======
->>>>>>> Add README.md
+- `VAULT_UNSEAL_KEY_PATH` is the path for unseal key saving
 
 ## Development requirements
 - [NodeJS and npm](https://nodejs.org)

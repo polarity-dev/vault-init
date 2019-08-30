@@ -11,6 +11,16 @@ ulimit -c 0
 
 set +e
 
+unsealVault() {
+  UNSEAL_KEY=$1
+  echo "Trying to unseal vault..."
+  until vault operator unseal -address=$VAULT_ENDPOINT $UNSEAL_KEY > /dev/null 2>&1; do
+    sleep 5 
+    echo "Trying to unseal vault..."
+  done
+  echo "Vault unsealed"
+}
+
 STATUS=1
 OUTPUT=''
 
@@ -36,6 +46,8 @@ while true; do
     break
   elif [ $STATUS = 2 ]; then
     echo "Vault is already initialized"
+    UNSEAL_KEY=$(cat $VAULT_UNSEAL_KEY_PATH) 
+    unsealVault $UNSEAL_KEY
     exit $STATUS
   fi
   echo "Retrying in 5s..."
@@ -47,12 +59,10 @@ ARRAY=$(echo "$OUTPUT" | awk -F': ' '{print $2}' | xargs)
 UNSEAL_KEY=$(echo $ARRAY | awk '{print $1}')
 ROOT_TOKEN=$(echo $ARRAY | awk '{print $2}')
 
-echo "Trying to unseal vault..."
-until vault operator unseal -address=$VAULT_ENDPOINT $UNSEAL_KEY > /dev/null 2>&1; do
-  sleep 5 
-  echo "Trying to unseal vault..."
-done
-echo "Vault unsealed"
+echo "Saving unseal key to $VAULT_UNSEAL_KEY_PATH..."
+echo "$UNSEAL_KEY" > $VAULT_UNSEAL_KEY_PATH
+
+unsealVault $UNSEAL_KEY
 
 echo "Loggin in..."
 until vault login -address=$VAULT_ENDPOINT $ROOT_TOKEN > /dev/null 2>&1

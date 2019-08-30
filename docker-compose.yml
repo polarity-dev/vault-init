@@ -25,5 +25,8 @@ services:
         VAULT_ENDPOINT: http://vault.example.com:8200
         VAULT_ADMIN_PASSWORD: admin
         VAULT_ADMIN_USERNAME: admin
+        VAULT_UNSEAL_KEY_PATH: /vault/keys/unseal.key
     container_name: vault_init
+    volumes:
+      - ${PWD}/vault/keys:/vault/keys
 

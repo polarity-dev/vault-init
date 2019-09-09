@@ -1,17 +1,19 @@
-FROM vault
+FROM vault:1.2.2
 
-ARG VAULT_ENDPOINT
-ENV VAULT_ENDPOINT $VAULT_ENDPOINT
-ARG VAULT_ADMIN_PASSWORD
-ENV VAULT_ADMIN_PASSWORD $VAULT_ADMIN_PASSWORD
-ARG VAULT_ADMIN_USERNAME
-ENV VAULT_ADMIN_USERNAME $VAULT_ADMIN_USERNAME
-ARG VAULT_UNSEAL_KEY_PATH=/vault/unseal_key.key
-ENV VAULT_UNSEAL_KEY_PATH $VAULT_UNSEAL_KEY_PATH
+RUN apk update
+
+RUN apk add --no-cache --virtual .build-deps
+RUN apk -Uuv --no-cache add groff less python py-pip jq
+RUN pip install awscli
+RUN apk --purge -v del py-pip
+RUN rm /var/cache/apk/*
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY plugins/aws-secretsmanager-store.sh /usr/local/bin/aws-secretsmanager-store.sh
+COPY plugins/aws-secretsmanager-retrieve.sh /usr/local/bin/aws-secretsmanager-retrieve.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/aws-secretsmanager-store.sh
+RUN chmod +x /usr/local/bin/aws-secretsmanager-retrieve.sh
 COPY admin-policy.hcl /tmp/admin-policy.hcl
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT "/usr/local/bin/docker-entrypoint.sh"

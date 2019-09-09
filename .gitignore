@@ -1,2 +1,6 @@
 vault/data
 vault/keys
+localstack/tmp
+
+# Custom
+.idea

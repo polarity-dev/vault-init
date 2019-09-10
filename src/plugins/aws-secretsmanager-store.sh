@@ -4,11 +4,11 @@ set -e
 
 COMMAND="aws secretsmanager create-secret"
 
-if [ -n $AWS_ENDPOINT ]; then
+if [ -n "${AWS_ENDPOINT}" ]; then
     COMMAND="$COMMAND --endpoint-url $AWS_ENDPOINT"
 fi
 
-if [ -n $AWS_REGION ]; then
+if [ -n "${AWS_REGION}" ]; then
     COMMAND="$COMMAND --region $AWS_REGION"
 fi
 

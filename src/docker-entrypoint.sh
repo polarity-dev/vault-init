@@ -22,12 +22,12 @@ unsealVault() {
 storeUnsealKey() {
     UNSEAL_KEY=$1
 
-    if [ -n AWS_SECRET_ID ] && [ -n $AWS_KMS_KEY_ID ]; then
+    if [ -n "${AWS_SECRET_ID}" ] && [ -n "${AWS_KMS_KEY_ID}" ]; then
         echo "Saving unseal key to AWS SecretsManager..."
         /usr/local/bin/aws-secretsmanager-store.sh ${UNSEAL_KEY}
     fi
 
-    if [ -n $VAULT_UNSEAL_KEY_PATH ]; then
+    if [ -n "${VAULT_UNSEAL_KEY_PATH}" ]; then
         echo "Saving unseal key to $VAULT_UNSEAL_KEY_PATH..."
         echo "$UNSEAL_KEY" > ${VAULT_UNSEAL_KEY_PATH}
     fi

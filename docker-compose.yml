@@ -7,8 +7,8 @@ services:
     container_name: vault
     ports:
       - 8200:8200
-    environment:
-      VAULT_REDIRECT_INTERFACE: eth0
+#    environment:
+#      VAULT_REDIRECT_INTERFACE: eth0
     cap_add:
       - IPC_LOCK
     volumes:
@@ -26,10 +26,10 @@ services:
       VAULT_ENDPOINT: http://vault.example.com:8200
       VAULT_ADMIN_PASSWORD: admin
       VAULT_ADMIN_USERNAME: admin
-      VAULT_UNSEAL_KEY_PATH: /vault/keys/unseal.key
+#      VAULT_UNSEAL_KEY_PATH: /vault/keys/unseal.key
       AWS_KMS_KEY_ID: "key-id"
       AWS_SECRET_ID: "vault-seal-key"
-      AWS_ENDPOINT: http://host.docker.internal:4584
+#      AWS_ENDPOINT: http://host.docker.internal:4584
       AWS_ACCESS_KEY_ID: " "
       AWS_SECRET_ACCESS_KEY: " "
       AWS_REGION: us-east-1

@@ -9,8 +9,6 @@ set -e
 # Prevent core dumps
 ulimit -c 0
 
-set +e
-
 unsealVault() {
   UNSEAL_KEY=$1
   echo "Trying to unseal vault..."
@@ -21,14 +19,40 @@ unsealVault() {
   echo "Vault unsealed"
 }
 
-STATUS=1
-OUTPUT=''
+storeUnsealKey() {
+    UNSEAL_KEY=$1
+
+    if [ -n "${AWS_SECRET_ID}" ] && [ -n "${AWS_KMS_KEY_ID}" ]; then
+        echo "Saving unseal key to AWS SecretsManager..."
+        /usr/local/bin/aws-secretsmanager-store.sh ${UNSEAL_KEY}
+    fi
+
+    if [ -n "${VAULT_UNSEAL_KEY_PATH}" ]; then
+        echo "Saving unseal key to $VAULT_UNSEAL_KEY_PATH..."
+        echo "$UNSEAL_KEY" > ${VAULT_UNSEAL_KEY_PATH}
+    fi
+}
+
+retrieveUnsealKey() {
+    if [ -n "${VAULT_UNSEAL_KEY_PATH}" ]; then
+        echo "Retrieving unseal key from ${VAULT_UNSEAL_KEY_PATH}..."
+        UNSEAL_KEY=$(cat ${VAULT_UNSEAL_KEY_PATH})
+    elif [ -n "${AWS_SECRET_ID}" ]; then
+        echo "Retrieving unseal key from AWS SecretsManager..."
+        UNSEAL_KEY=$(AWS_SECRET_ID=${AWS_SECRET_ID} /usr/local/bin/aws-secretsmanager-retrieve.sh)
+    else
+        echo "Cannot retrieve unseal key"
+        exit 1
+    fi
+}
+
+set +e
 
 while true; do
   echo "Checking the current vault status..."
-  vault status -address=$VAULT_ENDPOINT > /dev/null 2>&1
+  vault status -address=${VAULT_ENDPOINT} > /dev/null 2>&1
   STATUS=$?
-  if [ $STATUS = 2 ]; then
+  if [ ${STATUS} = 2 ]; then
     break
   else
     echo "Vault unavailable. Retrying in 5s..."
@@ -39,30 +63,28 @@ done
 
 while true; do
   echo "Initializing vault..."
-  OUTPUT=$(vault operator init -key-shares=1 -key-threshold=1 -address=$VAULT_ENDPOINT 2> /dev/null)
+  OUTPUT=$(vault operator init -key-shares=1 -key-threshold=1 -address=${VAULT_ENDPOINT} 2> /dev/null)
   STATUS=$?
-  if [ $STATUS = 0 ]; then
+  if [ ${STATUS} = 0 ]; then
     echo "Vault initialized"
+    ARRAY=$(echo "$OUTPUT" | awk -F': ' '{print $2}' | xargs)
+
+    UNSEAL_KEY=$(echo $ARRAY | awk '{print $1}')
+    ROOT_TOKEN=$(echo $ARRAY | awk '{print $2}')
+
+    unsealVault ${UNSEAL_KEY}
+    storeUnsealKey ${UNSEAL_KEY}
+
     break
-  elif [ $STATUS = 2 ]; then
+  elif [ ${STATUS} = 2 ]; then
     echo "Vault is already initialized"
-    UNSEAL_KEY=$(cat $VAULT_UNSEAL_KEY_PATH) 
-    unsealVault $UNSEAL_KEY
-    exit $STATUS
+    retrieveUnsealKey
+    unsealVault ${UNSEAL_KEY}
+    exit ${STATUS}
   fi
   echo "Retrying in 5s..."
   sleep 5
 done
-
-ARRAY=$(echo "$OUTPUT" | awk -F': ' '{print $2}' | xargs)
-
-UNSEAL_KEY=$(echo $ARRAY | awk '{print $1}')
-ROOT_TOKEN=$(echo $ARRAY | awk '{print $2}')
-
-echo "Saving unseal key to $VAULT_UNSEAL_KEY_PATH..."
-echo "$UNSEAL_KEY" > $VAULT_UNSEAL_KEY_PATH
-
-unsealVault $UNSEAL_KEY
 
 echo "Loggin in..."
 until vault login -address=$VAULT_ENDPOINT $ROOT_TOKEN > /dev/null 2>&1

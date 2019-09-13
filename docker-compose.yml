@@ -7,8 +7,8 @@ services:
     container_name: vault
     ports:
       - 8200:8200
-    environment:
-      VAULT_REDIRECT_INTERFACE: eth0
+#    environment:
+#      VAULT_REDIRECT_INTERFACE: eth0
     cap_add:
       - IPC_LOCK
     volumes:
@@ -21,12 +21,33 @@ services:
   vault-init:
     build:
       context: ./src
-      args:
-        VAULT_ENDPOINT: http://vault.example.com:8200
-        VAULT_ADMIN_PASSWORD: admin
-        VAULT_ADMIN_USERNAME: admin
-        VAULT_UNSEAL_KEY_PATH: /vault/keys/unseal.key
     container_name: vault_init
+    environment:
+      VAULT_ENDPOINT: http://vault.example.com:8200
+      VAULT_ADMIN_PASSWORD: admin
+      VAULT_ADMIN_USERNAME: admin
+#      VAULT_UNSEAL_KEY_PATH: /vault/keys/unseal.key
+      AWS_KMS_KEY_ID: "key-id"
+      AWS_SECRET_ID: "vault-seal-key"
+#      AWS_ENDPOINT: http://host.docker.internal:4584
+      AWS_ACCESS_KEY_ID: " "
+      AWS_SECRET_ACCESS_KEY: " "
+      AWS_REGION: us-east-1
     volumes:
       - ${PWD}/vault/keys:/vault/keys
+      - ${PWD}/src/plugins/aws-secretsmanager-store.sh:/usr/local/bin/aws-secretsmanager-store.sh
+      - ${PWD}/src/plugins/aws-secretsmanager-retrieve.sh:/usr/local/bin/aws-secretsmanager-retrieve.sh
 
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - 4584:4584
+    environment:
+      - LOCALSTACK_SERVICES=secretsmanager
+      - DEBUG=1
+      - DATA_DIR=localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - ${PWD}/localstack/tmp:/tmp/localstack
+      - ${PWD}/localstack/data:/home/localstack/data

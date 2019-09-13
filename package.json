@@ -3,10 +3,10 @@
   "name": "vault-init",
   "version": "0.1.0",
   "scripts": {
-    "start": "docker-compose up",
-    "start-with-build": "docker-compose up --build --force-recreate",
+    "start": "npm stop && docker-compose up",
+    "start-with-build": "npm stop && docker-compose up --build --force-recreate",
     "stop": "docker-compose down -v --remove-orphans",
-    "publish": "docker build --no-cache -t vault-init:$npm_package_version $(PWD)/src && docker tag vault-init:$npm_package_version soluzionifutura/vault-init:$npm_package_version && docker push soluzionifutura/vault-init:$npm_package_version"
+    "publish": "docker build --no-cache -t vault-init:$npm_package_version $(PWD)/src && docker tag vault-init:$npm_package_version nicofuccella/vault-init:$npm_package_version && docker push nicofuccella/vault-init:$npm_package_version"
   },
   "repository": {
     "type": "git",
